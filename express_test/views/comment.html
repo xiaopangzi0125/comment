@@ -5,20 +5,120 @@
 		<title>登陆</title>
 		<link rel="stylesheet" href="/common.css">
 		<link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<style type="text/css">
+			.active{
+				font-size: 28px;
+				color: pink;
+			}
+		</style>
 	</head>
 	<body>
 		<div class="container">
 
-		  <p>欢迎<%= username %></p>
-		  <div class="form-horizontal">
-		 
-		  </div>
-		</div>
+		  <p>欢迎<span id="author"><%= username %></span></p>
+		  
+		  <ul class="list-group">
+             
+               <% list.forEach(function(item,idx){ %>
 
+                      <li class="list-group-item list-group-item-success">
+                      	 <p class="active">评论的主题：<%= item.title %></p>
+                         <p>评论的内容：<%= item.content %>
+                              <img src="<%= item.img %>" alt="" height="50" wigth="60">
+                         </p>
+                         <p>作者<%= item.author %></p>
+                         <button id="delete" class="btn btn-success" data-key= <%= item._id %> >删除</button>
+                      </li>
+
+               <% }) %>
+
+		  </ul>
+		  <div class="form-horizontal">
+		   <div class="form-group">
+		     <label for="username">主题：</label>
+		     <input type="text" class="form-control" id="title" placeholder="请输入评论标题">
+		   </div>
+		  <div class="form-group">
+		  	   <label for="username">内容</label>
+               <textarea class="form-control" rows="3" id="content" placeholder="请输入评论内容..."></textarea>
+		  </div>
+		  <div class="form-group">
+		  	   <label for="username">上传图片</label>
+		  	   <input type="file" id="file">
+		  	   <div class="imgBox">
+		  	   	  <img src="https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo_top_ca79a146.png" alt="">
+		  	   </div>
+		  </div>
+		  <button type="button" class="btn btn-success">（成功）Success</button>
+		</div>
+		</div>
 	</div>
 	
 	<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
 	<script type="text/javascript">
+		$(function(){
+			var username = $("#username"),
+				content = $("#content"),
+				author = $("#author");
+			
+			$("#file").on("change",function(event){
+				event.preventDefault();
+				var $this = $(this);
+				if(this.files.length){
+					var file = this.files[0];
+					if(file.type == "image/png" || file.type == "image/jpeg"){
+						var form = new FormData();
+							form.append("upload",file);
+							
+							$.ajax({
+								url:'/api/upload',
+								data:form,
+								type:'post',
+								dataType:"JSON",
+								contentType:false,
+								processData:false,
+								success:function(data){
+									$(".imgBox").find('img').attr('src',data.img);
+								}
+							})
+					}
+				}
+			});
+			
+			$(".btn").on("click",function(event){
+				event.preventDefault();
+				var param = {
+					title:username.val(),
+					content:content.val(),
+					author:author.html(),
+					img:$(".imgBox").find("img").attr("src")
+				};
+				
+				if(!param.title){
+					alert("标题不能为空");
+					return;
+				};
+				
+				$.post("/api/comment",param,function(data){
+					var html = 
+						`<li class="list-group-item list-group-item-success">
+                      	 <p class="active">评论的主题: ${param.title}</p>
+                         <p>评论的内容：${param.content}
+                              <img src=${param.img}  alt="" height="50" wigth="60">
+                         </p>
+                         <p>作者${param.author}</p>
+                       </li>`;
+                    
+                    $(".list-group").append(html);
+                    
+                    username.val("");
+                    content.val("");
+                    $(".imgBox").find("img").attr("src","https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo_top_ca79a146.png")
+				});
+			});
+			
+			
+		})
 	</script>
 	</body>
 </html>
